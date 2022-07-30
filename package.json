@@ -1,0 +1,50 @@
+{
+    "name": "node-typescript-boilerplate",
+    "version": "0.0.0",
+    "description": "Minimalistic boilerplate to quick-start Node.js development in TypeScript.",
+    "type": "module",
+    "engines": {
+        "node": ">= 16.13 <17"
+    },
+    "devDependencies": {
+        "@types/jest": "~27.5",
+        "@types/node": "~16",
+        "@typescript-eslint/eslint-plugin": "^5.31.0",
+        "@typescript-eslint/parser": "^5.31.0",
+        "eslint": "~8.16",
+        "eslint-config-prettier": "~8.5",
+        "eslint-plugin-jest": "~26.2",
+        "jest": "~28.1",
+        "prettier": "~2.6",
+        "rimraf": "~3.0",
+        "ts-jest": "~28.0",
+        "tsutils": "~3.21",
+        "typescript": "~4.7"
+    },
+    "scripts": {
+        "start": "node build/src/main.js",
+        "clean": "rimraf coverage build tmp",
+        "prebuild": "npm run lint",
+        "build": "tsc -p tsconfig.json",
+        "build:watch": "tsc -w -p tsconfig.json",
+        "build:release": "npm run clean && tsc -p tsconfig.release.json",
+        "lint": "eslint . --ext .ts --ext .mts",
+        "lint:fix": "eslint . --ext .ts --fix && npm run prettier",
+        "test": "jest --coverage",
+        "prettier": "prettier --config .prettierrc --write src/**/*.ts",
+        "test:watch": "jest --watch"
+    },
+    "author": "Cory Lewis",
+    "license": "",
+    "dependencies": {
+        "@types/node-fetch": "^2.6.2",
+        "axios": "^0.27.2",
+        "lodash": "^4.17.21",
+        "node-html-parser": "^5.3.3",
+        "rxjs": "^7.5.6",
+        "tslib": "~2.4"
+    },
+    "volta": {
+        "node": "16.13.0"
+    }
+}
