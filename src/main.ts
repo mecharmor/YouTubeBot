@@ -1,15 +1,32 @@
 
 // import { getAudioUrls } from './helper/freeLoopsParser.js';
-import { DownloadFreeLoopsVideo } from './helper/freeLoopsDownloader.js';
+import { DownloadFreeLoopsVideo, FreeLoopsAudio } from './helper/freeLoopsDownloader.js';
 // import { default as axios } from 'axios';
 
 const [ id, title ] = [ '8122', 'White Noise Mp3' ];
+
+// getAudioDurationInSeconds
+
+// getAudioDurationInSeconds( './temp_downloads/White_Noise_Mp3.mp3' )
+//     .then( (num : number) => console.log( 'we have detected this', num ) );
 
 DownloadFreeLoopsVideo( {
     path : './temp_downloads',
     props : { id, title }
 } )
-.then( () => console.log( 'finished' ) )
+.then( ( {
+    fileName,
+    fullPath,
+    fileStats,
+    durationSec,
+} : FreeLoopsAudio ) => {
+    console.log( {
+        fileName,
+        fullPath,
+        blksize: fileStats.blksize,
+        durationSec,
+    } );
+} )
 .catch( (err) => console.log( 'failed', err ) );
 
 // getAudioUrls( 'white noise' ).then( sounds => {
