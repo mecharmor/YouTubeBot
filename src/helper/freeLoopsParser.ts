@@ -1,13 +1,7 @@
 import { HTMLElement, parse } from 'node-html-parser';
 import { default as axios } from 'axios';
+import { SEARCH_URL } from './freeLoopsConsts.js';
 const { get } = axios;
-
-export const SEARCH_URL = 'https://free-loops.com/free-loops-find.php';
-// const RANDOM_SOUND_UNTESTED : string = 'https://free-loops.com/random-sound.php';
-
-export function constructDownloadUrl(id: string) {
-    return `https://free-loops.com/force-audio.php?id=${id}`;
-}
 
 export function constructFreeLoopsSearchUrl(term: string, page = 1) {
     if (!term) throw 'Must specify a term!';

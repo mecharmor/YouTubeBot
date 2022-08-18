@@ -1,3 +1,22 @@
+
+// import { getAudioUrls } from './helper/freeLoopsParser.js';
+import { DownloadFreeLoopsVideo } from './helper/freeLoopsDownloader.js';
+// import { default as axios } from 'axios';
+
+const [ id, title ] = [ '8122', 'White Noise Mp3' ];
+
+DownloadFreeLoopsVideo( {
+    path : './temp_downloads',
+    props : { id, title }
+} )
+.then( () => console.log( 'finished' ) )
+.catch( (err) => console.log( 'failed', err ) );
+
+// getAudioUrls( 'white noise' ).then( sounds => {
+//     for( const { id, title, ...rest } of sounds ) {
+//         console.log( id, title, rest );
+//     }
+// })
 // /**
 //  * Some predefined delay values (in milliseconds).
 //  */
@@ -32,13 +51,3 @@
 // }
 
 // // console.log('smoke tests here')
-
-import { getAudioUrls } from './helper/freeLoopsParser.js';
-// import { default as axios } from 'axios';
-
-
-getAudioUrls( 'white noise' ).then( sounds => {
-    for( const { id, title } of sounds ) {
-        console.log( id, title );
-    }
-})
