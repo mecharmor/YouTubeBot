@@ -1,25 +1,29 @@
 import fs from 'fs';
-import { default as axios, AxiosPromise, AxiosResponse } from 'axios';
+import { default as axios, AxiosPromise, AxiosResponse, AxiosRequestConfig } from 'axios';
 import { constructDownloadUrl } from './freeLoopsConsts.js';
 import { FreeLoopsProps } from './freeLoopsModel.js';
 import { extname } from 'path';
 import { Stream } from 'stream';
 import GetAudioDuration from 'get-audio-duration';
+import { ensurePathEndsWithSlash } from '../helper/path.js';
 const { getAudioDurationInSeconds } = GetAudioDuration;
+import ProgressBar from 'progress';
+import { AudioSample } from '../model.js';
 
-const downloadFromFreeLoops : ( id: string ) => AxiosPromise<Stream> = ( id: string ) => {
+export function downloadFromFreeLoops ( id: string, overrideConfig? : Partial<AxiosRequestConfig> ) : AxiosPromise<Stream> {
     return axios( {
         method : 'GET',
         url : constructDownloadUrl( id ),
         responseType : 'stream',
+        ...overrideConfig
     } );
 };
 
-export interface FreeLoopsAudio {
-    readonly fullPath : string;
-    readonly fileName : string;
+export interface FreeLoopsAudio extends AudioSample {
+    // readonly fullPath : string;
+    // readonly fileName : string;
     readonly fileStats : fs.Stats;
-    readonly durationSec : number;
+    // readonly durationSec : number;
 }
 
 export interface FreeLoopsError {
@@ -33,26 +37,27 @@ export async function DownloadFreeLoopsVideo( {
     readonly path : string;
     readonly props : FreeLoopsProps;
 } ) : Promise<FreeLoopsAudio | FreeLoopsError> {
-    const { data } : AxiosResponse = await downloadFromFreeLoops( id );
-
-    // Add slash if one does not exist
-    if( path[ path.length - 1 ] !== '/' ) {
-        path += '/';
-    }
-
+    path = ensurePathEndsWithSlash( path );
     if( !fs.statSync( path ).isDirectory() ) {
         return Promise.reject( `${ path } is not a directory` );
     }
 
+    const { data, headers } : AxiosResponse<Stream> = await downloadFromFreeLoops( id );
+    const progBar = new ProgressBar(`Downloading [:bar] :percent`, {
+        width: 40,
+        complete: '=',
+        incomplete: ' ',
+        total: parseInt( headers['content-length'] )
+    } )
+
     const fileName : string = `${ title }.${ extname( title ) || 'mp3' }`;
     const fullPath : string = `${ path }${ fileName }`;
-    data.pipe(
-        fs.createWriteStream( fullPath )
-    );
+    data.pipe( fs.createWriteStream( fullPath ) );
 
     let downloadedFile : Omit<FreeLoopsAudio, 'durationSec'>;
     try{
         downloadedFile = await new Promise( ( resolve, reject ) => {
+            data.on( 'data', ( { length } : any ) => progBar.tick( length ) );
             data.on( 'end', () => resolve( {
                 fullPath,
                 fileName,
