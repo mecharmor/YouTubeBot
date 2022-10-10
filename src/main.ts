@@ -17,7 +17,7 @@ const mockDownloadedFile : AudioSample = {
 
 
 makeVideo( {
-    duration : '00:10:00.000',
+    duration : '00:30:00.000',
     backgroundImagePath : './temp_downloads/test.jpg',
     audio : mockDownloadedFile,
     outputFilePath : './temp_downloads/test.mp4',

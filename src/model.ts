@@ -4,5 +4,5 @@ export interface BaseSample {
     readonly durationSec : number;
 }
 
-export interface AudioSample extends BaseSample{}
-export interface VideoSample extends BaseSample {}
+export type AudioSample = BaseSample
+export type VideoSample = BaseSample

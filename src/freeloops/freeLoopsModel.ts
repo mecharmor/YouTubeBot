@@ -1,5 +1,4 @@
-
 export interface FreeLoopsProps {
-    readonly id : string;
-    readonly title : string;
+    readonly id: string;
+    readonly title: string;
 }

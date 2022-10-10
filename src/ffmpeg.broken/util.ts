@@ -1,4 +1,3 @@
-
 // import Ffmpeg from 'fluent-ffmpeg';
 // // import { FfmpegCommand, FfmpegOnEventHandlers } from "./fluentffmpeg.js";
 // import { AudioSample, VideoSample } from "../model.js";
@@ -123,10 +122,8 @@
 //     } )
 // }
 
-
 // // for( let i = 0; i < INPUT_ITERATIONS; i++ )
 // //     command.input( mockDownloadedFile.fullPath )
-
 
 // // const bar : any = new SingleBar( {
 // //     format: 'Rendering.. | {bar} | {percentage}%',
