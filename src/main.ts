@@ -1,31 +1,49 @@
 // import { FreeLoopsAudio } from "./freeloops/freeLoopsDownloader.js";
 
+import { handleVideoUpload } from "./helper/youtube.js";
+import { resolve } from 'path';
+
 // import Ffmpeg from 'fluent-ffmpeg';
 // import { FfmpegCommand, FfmpegOnEventHandlers } from "./ffmpeg/fluentffmpeg.js";
 // import { AddImageToAudio, LoopAudioUntilReachedTime } from "./ffmpeg.broken/util.js";
-import { AudioSample } from "./model.js";
-import { makeVideo } from './helper/renderer.js';
 // import CLIProgress from 'cli-progress'; // https://www.npmjs.com/package/cli-progress
 // import { formatMessageForProgBar } from "./helper/progressBar.js";
 // const { Presets, MultiBar } = CLIProgress;
 
-const mockDownloadedFile : AudioSample = {
-    fileName: 'Small Waterfall.wav',
-    fullPath: './temp_downloads/Small Waterfall.wav',
-    durationSec: 86.0
-};
+// const mockDownloadedFile : AudioSample = {
+//     fileName: 'Small Waterfall.wav',
+//     fullPath: './temp_downloads/Small Waterfall.wav',
+//     durationSec: 86.0
+// };
 
+// How to Render a video start
+// import { AudioSample } from "./model.js";
+// import { makeVideo } from './helper/renderer.js';
+// makeVideo( {
+//     duration : '00:30:00.000',
+//     backgroundImagePath : './temp_downloads/test.jpg',
+//     audio : mockDownloadedFile,
+//     outputFilePath : './temp_downloads/test.mp4',
+// } ).then( () => {
+//     console.log( 'success!' );
+// } ).catch( () => {
+//     console.log( 'failed!' );
+// } )
+// -------------------
 
-makeVideo( {
-    duration : '00:30:00.000',
-    backgroundImagePath : './temp_downloads/test.jpg',
-    audio : mockDownloadedFile,
-    outputFilePath : './temp_downloads/test.mp4',
-} ).then( () => {
-    console.log( 'success!' );
-} ).catch( () => {
-    console.log( 'failed!' );
+// Uploading To Youtube
+handleVideoUpload( {
+    title : 'test uploaded youtube video',
+    description : "this is a youtube video test description",
+    video : {
+        fullPath : resolve( './temp_downloads/test.mp4' ),
+        fileName : 'N/A',
+        durationSec : 1800,
+        thumbnailPath : './temp_downloads/test.jpg',
+    }
 } )
+
+
 
 
 // const multiBar : any = new MultiBar( {

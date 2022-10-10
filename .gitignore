@@ -7,6 +7,7 @@ __pycache__/
 *.so
 
 temp_downloads/*
+client_secret.json
 
 # Distribution / packaging
 node_modules/

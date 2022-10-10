@@ -5,4 +5,6 @@ export interface BaseSample {
 }
 
 export type AudioSample = BaseSample
-export type VideoSample = BaseSample
+export interface VideoSample extends BaseSample {
+    readonly thumbnailPath : string;
+}
