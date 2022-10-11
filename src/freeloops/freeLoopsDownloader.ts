@@ -5,7 +5,7 @@ import {
     AxiosResponse,
     AxiosRequestConfig,
 } from 'axios';
-import { constructDownloadUrl } from './freeLoopsConsts.js';
+import { constructDownloadUrl, KnownWorkingTerms } from './freeLoopsConsts.js';
 import { FreeLoopsProps } from './freeLoopsModel.js';
 import { extname } from 'path';
 import { Stream } from 'stream';
@@ -14,6 +14,8 @@ import { ensurePathEndsWithSlash } from '../helper/path.js';
 const { getAudioDurationInSeconds } = GetAudioDuration;
 import ProgressBar from 'progress';
 import { AudioSample } from '../model.js';
+import { pickRandomElem } from '../helper/random.js';
+import { getAudioUrls, getMaxPageCountForSearchTerm } from './freeLoopsParser.js';
 
 export function downloadFromFreeLoops(
     id: string,
@@ -38,7 +40,23 @@ export interface FreeLoopsError {
     readonly message: string;
 }
 
-export async function DownloadFreeLoopsVideo({
+export async function FindRandomSample( recurseCount : number = 0, maxRecurse : number = 1 ) : Promise<FreeLoopsProps> {
+    const randomTerm : string = pickRandomElem( KnownWorkingTerms );
+    const maxPageCount : number = await getMaxPageCountForSearchTerm( randomTerm )
+    if( recurseCount >= maxRecurse ) {
+        throw new Error( 'Failed to find a term successfully' );
+    }
+
+    if( maxPageCount === 0 && recurseCount < maxRecurse ) {
+        process.env.DEBUG && console.warn( `FindRandomSample recursing and failed on term ${ randomTerm } that has 0 pages` );
+        return FindRandomSample( recurseCount + 1, maxRecurse );
+    }
+
+    const randomPage : number = Math.floor(Math.random() * maxPageCount);
+    return pickRandomElem( await getAudioUrls( randomTerm, randomPage ) );
+}
+
+export async function DownloadFreeLoopsAudio({
     path,
     props: { title, id },
 }: {

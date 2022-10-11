@@ -1,3 +1,5 @@
+// Implementation pulled from: https://quanticdev.com/articles/automating-my-youtube-uploads-using-nodejs/
+
 // YouTube API video uploader using JavaScript/Node.js
 // You can find the full visual guide at: https://www.youtube.com/watch?v=gncPwSEzq1s
 // You can find the brief written guide at: https://quanticdev.com/articles/automating-my-youtube-uploads-using-nodejs
@@ -7,14 +9,13 @@
 import fs from 'fs';
 import readline from 'readline';
 import { resolve } from 'path';
-import assert from 'assert';
 import { default as googleapis } from 'googleapis';
 const { google } = googleapis;
 import { VideoSample } from '../model.js';
 const OAuth2 = google.auth.OAuth2;
 
 // video category IDs for YouTube:
-enum categoryIds {
+enum YouTubeCategory {
     Entertainment = 24,
     Education = 27,
     ScienceTechnology = 28,
@@ -24,37 +25,48 @@ enum categoryIds {
 const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
 const TOKEN_PATH = '../client_oauth_token.json';
 
-// const videoFilePath = '../../temp_downloads/test.mp4';
-// const thumbFilePath = '../../temp_downloads/test.jpg';
-interface YouTubeVideo {
-    readonly title : string;
-    readonly description : string;
-    readonly tags? : string[];
-    readonly video : VideoSample;
+export interface YouTubeVideo {
+    readonly title: string;
+    readonly description: string;
+    readonly tags?: string[];
+    readonly video: Pick<VideoSample, 'fullPath' | 'thumbnailPath'>;
 }
 
-export function handleVideoUpload( youTubeVideo : YouTubeVideo ) {
-    const {
-        video : { fullPath, thumbnailPath },
-    } = youTubeVideo;
-    assert(fs.existsSync(fullPath), `File Path not found at ${ fullPath }`);
-    assert(fs.existsSync(thumbnailPath), `Thumbnail not found at ${ thumbnailPath }`);
-
-    // Load client secrets from a local file.
-    fs.readFile(
-        resolve( './client_secret.json' ),
-        function processClientSecrets(err, content) {
-            if (err) {
-                console.log('Error loading client secret file: ' + err);
-                return;
-            }
-            // Authorize a client with the loaded credentials, then call the YouTube API.
-            authorize(JSON.parse( content as any ), (auth) =>
-                uploadVideo(auth, youTubeVideo)
-            );
+export function upload2YouTube(
+    youTubeVideo: YouTubeVideo
+): Promise<string | any> {
+    return new Promise((res, rej) => {
+        const {
+            video: { fullPath, thumbnailPath },
+        } = youTubeVideo;
+        if (!fs.existsSync(fullPath)) {
+            rej(`File Path not found at ${fullPath}`);
+            return;
         }
-    );
-};
+
+        if (!fs.existsSync(thumbnailPath)) {
+            rej(`Thumbnail not found at ${thumbnailPath}`);
+            return;
+        }
+
+        // Load client secrets from a local file.
+        fs.readFile(
+            resolve('./client_secret.json'),
+            function processClientSecrets(err, content) {
+                if (err) {
+                    rej('Error loading client secret file: ' + err);
+                    return;
+                }
+                // Authorize a client with the loaded credentials, then call the YouTube API.
+                authorize(JSON.parse(content as any), (auth) =>
+                    uploadVideo(auth, youTubeVideo)
+                        .then((r: any) => res(r))
+                        .catch((err: any) => rej(err))
+                );
+            }
+        );
+    });
+}
 
 /**
  * Upload the video file.
@@ -62,62 +74,66 @@ export function handleVideoUpload( youTubeVideo : YouTubeVideo ) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
 function uploadVideo(
-    auth : any,
+    auth: any,
     {
         title,
         description,
         tags = [],
-        video : { fullPath, thumbnailPath }
-    } : YouTubeVideo) {
+        video: { fullPath, thumbnailPath },
+    }: YouTubeVideo
+): Promise<string | any> {
     const service = google.youtube('v3');
 
-    service.videos.insert(
-        {
-            auth: auth,
-            part: [ 'snippet,status' ],
-            requestBody: {
-                snippet: {
-                    title,
-                    description,
-                    tags,
-                    categoryId: `${ categoryIds.Entertainment }`,
-                    defaultLanguage: 'en',
-                    defaultAudioLanguage: 'en',
-                },
-                status: {
-                    privacyStatus: 'private',
-                },
-            },
-            media: {
-                body: fs.createReadStream( fullPath ),
-            },
-        },
-        function (err, response) {
-            if (err) {
-                console.log('The API returned an error: ' + err);
-                return;
-            }
-            console.log(response.data);
-
-            console.log('Video uploaded. Uploading the thumbnail now.');
-            service.thumbnails.set(
-                {
-                    auth: auth,
-                    videoId: response.data.id,
-                    media: {
-                        body: fs.createReadStream( thumbnailPath ),
+    return new Promise((resolve, reject) => {
+        service.videos.insert(
+            {
+                auth,
+                part: ['snippet,status'],
+                requestBody: {
+                    snippet: {
+                        title,
+                        description,
+                        tags,
+                        categoryId: `${YouTubeCategory.Entertainment}`,
+                        defaultLanguage: 'en',
+                        defaultAudioLanguage: 'en',
+                    },
+                    status: {
+                        privacyStatus: 'public',
                     },
                 },
-                function (err, response) {
-                    if (err) {
-                        console.log('The API returned an error: ' + err);
-                        return;
-                    }
-                    console.log(response.data);
+                media: {
+                    body: fs.createReadStream(fullPath),
+                },
+            },
+            function (err, response): void {
+                if (err) {
+                    reject(`Failed to upload youtube video: ${err}`);
+                    return;
                 }
-            );
-        }
-    );
+
+                // console.log(response.data);
+                // console.log('Video uploaded. Uploading the thumbnail now.');
+                service.thumbnails.set(
+                    {
+                        auth,
+                        videoId: response.data.id,
+                        media: {
+                            body: fs.createReadStream(thumbnailPath),
+                        },
+                    },
+                    function (err, response): void {
+                        if (err) {
+                            reject(`Failed to set thumbnail: ${err}`);
+                            return;
+                        }
+
+                        resolve(response);
+                    }
+                );
+            }
+        );
+    });
 }
 
 /**
@@ -138,7 +154,7 @@ function authorize(credentials, callback) {
         if (err) {
             getNewToken(oauth2Client, callback);
         } else {
-            oauth2Client.credentials = JSON.parse( token as any );
+            oauth2Client.credentials = JSON.parse(token as any);
             callback(oauth2Client);
         }
     });
@@ -162,7 +178,7 @@ function getNewToken(oauth2Client, callback) {
         input: process.stdin,
         output: process.stdout,
     });
-    rl.question('Enter the code from that page here: ', function (code) {
+    rl.question('Enter the code from the url page here: ', function (code) {
         rl.close();
         oauth2Client.getToken(code, function (err, token) {
             if (err) {

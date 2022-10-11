@@ -1,12 +1,12 @@
 import {
-    DownloadFreeLoopsVideo,
+    DownloadFreeLoopsAudio,
     FreeLoopsAudio,
 } from '../freeloops/freeLoopsDownloader.js';
 
 const [id, title] = ['8122', 'White Noise Mp3'];
 
 export function runMock(): void {
-    DownloadFreeLoopsVideo({
+    DownloadFreeLoopsAudio({
         path: './temp_downloads',
         props: { id, title },
     })

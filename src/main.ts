@@ -1,7 +1,94 @@
+import dotenv from 'dotenv';
+dotenv.config();
+import {
+    mkdirSync,
+    rmdirSync
+} from 'fs';
+import { DownloadFreeLoopsAudio, FindRandomSample, FreeLoopsAudio } from './freeloops/freeLoopsDownloader.js';
+import { FreeLoopsProps } from './freeloops/freeLoopsModel.js';
+import { ensurePathEndsWithSlash, removeExtensionIfExists } from './helper/path.js';
+import { DownloadImageFromSearch } from './helper/pexel.js';
+import { makeVideo } from './helper/renderer.js';
+import { toTitleText } from './helper/string.js';
+import { padZero } from './helper/time.js';
+import { upload2YouTube } from './helper/youtube.js';
+
+const CACHE_DIR = ensurePathEndsWithSlash( `./cache-${ ( new Date() ).toISOString() }` );
+const THUMBNAIL_NAME = 'image.jpeg';
+mkdirSync( CACHE_DIR );
+
+FindRandomSample()
+.then( ( sample : FreeLoopsProps ) => {
+    console.log( 'Downloading audio sample...');
+    return DownloadFreeLoopsAudio( {
+        path : CACHE_DIR,
+        props : sample,
+    } )
+} )
+.then( ( audio : FreeLoopsAudio ) => {
+    return DownloadImageFromSearch(
+        removeExtensionIfExists( audio.fileName ),
+        CACHE_DIR,
+        THUMBNAIL_NAME
+    )
+        .then( ( thumbnailPath : string ) => {
+            return {
+                thumbnailPath,
+                audio
+            };
+        } )
+} )
+.then( ( { thumbnailPath, audio } : { thumbnailPath : string, audio : FreeLoopsAudio } ) => {
+    const outputFilePath : string = CACHE_DIR + 'output.mp4';
+    const [ hours, minutes, seconds ] = [ 0, 5, 0 ];
+    return makeVideo( {
+        audio,
+        outputFilePath,
+        duration : `${ padZero( hours ) }:${ padZero( minutes ) }:${ padZero( seconds ) }.000`,
+        backgroundImagePath : thumbnailPath,
+    } ).then( () => ( {
+        thumbnailPath,
+        outputFilePath,
+        audio,
+        duration : {
+            hours, minutes, seconds
+        },
+    } ) );
+} )
+.then( ( {
+    thumbnailPath,
+    outputFilePath,
+    audio,
+    duration : { hours, minutes, seconds },
+} : {
+    thumbnailPath : string,
+    outputFilePath : string,
+    audio : FreeLoopsAudio,
+    duration : { hours : number, minutes : number, seconds : number },
+} ) => {
+    const title : string = `\
+    ${ toTitleText( hours, 'hour' ) } \
+    ${ toTitleText( minutes, 'minute' ) } \
+    ${ toTitleText( seconds, 'second' ) } \
+    of ${ removeExtensionIfExists( audio.fileName ) } sounds
+    `
+    return upload2YouTube( {
+        title,
+        description : 'Like and Subscribe for more content!',
+        video : {
+            fullPath : outputFilePath,
+            thumbnailPath : thumbnailPath,
+        }
+    } )
+} )
+.catch( e => console.log( e ) )
+.finally( () => {
+    rmdirSync( CACHE_DIR, { recursive : true } )
+} )
+
+
 // import { FreeLoopsAudio } from "./freeloops/freeLoopsDownloader.js";
 
-import { handleVideoUpload } from "./helper/youtube.js";
-import { resolve } from 'path';
 
 // import Ffmpeg from 'fluent-ffmpeg';
 // import { FfmpegCommand, FfmpegOnEventHandlers } from "./ffmpeg/fluentffmpeg.js";
@@ -31,17 +118,28 @@ import { resolve } from 'path';
 // } )
 // -------------------
 
+// Download thumbnail
+// import { DownloadImageFromSearch } from './helper/pexel.js';
+// DownloadImageFromSearch(
+//     'mountain',
+//     './temp_downloads'
+// )
+// -----
+
 // Uploading To Youtube
-handleVideoUpload( {
-    title : 'test uploaded youtube video',
-    description : "this is a youtube video test description",
-    video : {
-        fullPath : resolve( './temp_downloads/test.mp4' ),
-        fileName : 'N/A',
-        durationSec : 1800,
-        thumbnailPath : './temp_downloads/test.jpg',
-    }
-} )
+// import { upload2YouTube } from "./helper/youtube.js";
+// import { resolve } from 'path';
+// upload2YouTube( {
+//     title : 'test uploaded youtube video',
+//     description : "this is a youtube video test description",
+//     video : {
+//         fullPath : resolve( './temp_downloads/test.mp4' ),
+//         fileName : 'N/A',
+//         durationSec : 1800,
+//         thumbnailPath : './temp_downloads/test.jpg',
+//     }
+// } )
+// --------------
 
 
 
