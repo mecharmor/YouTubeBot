@@ -1,6 +1,6 @@
 // import Ffmpeg from 'fluent-ffmpeg';
 // // import { FfmpegCommand, FfmpegOnEventHandlers } from "./fluentffmpeg.js";
-// import { AudioSample, VideoSample } from "../model.js";
+// import { AudioSample, VideoSample } from "model.js";
 // import { mkdirSync, existsSync, rmdirSync } from 'fs';
 // import { extname } from 'path';
 // import lodash from 'lodash';

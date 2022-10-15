@@ -23,7 +23,7 @@ enum YouTubeCategory {
 
 // If modifying these scopes, delete your previously saved credentials in client_oauth_token.json
 const SCOPES = ['https://www.googleapis.com/auth/youtube.upload'];
-const TOKEN_PATH = '../client_oauth_token.json';
+const TOKEN_PATH = 'client_oauth_token.json';
 
 export interface YouTubeVideo {
     readonly title: string;

@@ -9,6 +9,8 @@ __pycache__/
 temp_downloads/*
 client_secret.json
 
+client_oauth_token.json
+
 # Distribution / packaging
 node_modules/
 .Python

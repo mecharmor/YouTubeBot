@@ -15,7 +15,11 @@ const { getAudioDurationInSeconds } = GetAudioDuration;
 import ProgressBar from 'progress';
 import { AudioSample } from '../model.js';
 import { pickRandomElem } from '../helper/random.js';
-import { getAudioUrls, getMaxPageCountForSearchTerm } from './freeLoopsParser.js';
+import {
+    getAudioUrls,
+    getMaxPageCountForSearchTerm,
+} from './freeLoopsParser.js';
+import { isDebugging } from '../helper/env.js';
 
 export function downloadFromFreeLoops(
     id: string,
@@ -40,20 +44,40 @@ export interface FreeLoopsError {
     readonly message: string;
 }
 
-export async function FindRandomSample( recurseCount : number = 0, maxRecurse : number = 1 ) : Promise<FreeLoopsProps> {
-    const randomTerm : string = pickRandomElem( KnownWorkingTerms );
-    const maxPageCount : number = await getMaxPageCountForSearchTerm( randomTerm )
-    if( recurseCount >= maxRecurse ) {
-        throw new Error( 'Failed to find a term successfully' );
+export async function FindRandomSample(
+    recurseCount = 0,
+    maxRecurse = 10
+): Promise<FreeLoopsProps> {
+    const randomTerm: string = pickRandomElem(KnownWorkingTerms);
+    const maxPageCount: number = await getMaxPageCountForSearchTerm(randomTerm);
+    if (recurseCount >= maxRecurse) {
+        throw new Error('Failed to find a term successfully');
     }
 
-    if( maxPageCount === 0 && recurseCount < maxRecurse ) {
-        process.env.DEBUG && console.warn( `FindRandomSample recursing and failed on term ${ randomTerm } that has 0 pages` );
-        return FindRandomSample( recurseCount + 1, maxRecurse );
+    if (maxPageCount === 0 && recurseCount < maxRecurse) {
+        isDebugging() &&
+            console.warn(
+                `FindRandomSample recursing and failed on term ${randomTerm} that has 0 pages`
+            );
+        return FindRandomSample(recurseCount + 1, maxRecurse);
     }
 
-    const randomPage : number = Math.floor(Math.random() * maxPageCount);
-    return pickRandomElem( await getAudioUrls( randomTerm, randomPage ) );
+    const randomPage: number = Math.floor(Math.random() * maxPageCount);
+
+    const records: FreeLoopsProps[] = await getAudioUrls(
+        randomTerm,
+        randomPage
+    );
+    if (records.length === 0) {
+        // sometimes scraping records returns empty so we should retry
+        isDebugging() &&
+            console.warn(
+                'FindRandomSample, the term and page we picked returned zero records'
+            );
+        return FindRandomSample(recurseCount + 1, maxRecurse);
+    }
+
+    return pickRandomElem(records);
 }
 
 export async function DownloadFreeLoopsAudio({
