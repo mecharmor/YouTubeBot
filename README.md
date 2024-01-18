@@ -5,6 +5,7 @@ See an active YouTube channel running this! Here: https://www.youtube.com/channe
 
 ## Prerequisites
 1. This project uses the 'googleapis' package which uses Google auth OAuth2 so you will need to create a client_oath_token.json at the root of the project for access to uploading youtube videos. Follow this guide: https://developers.google.com/youtube/v3/quickstart/nodejs
+2. Copy the `.env.sample` to `.env` and fill the fields with your desired configuration
 
 ## Getting Started
 
