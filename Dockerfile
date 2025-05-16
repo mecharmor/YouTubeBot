@@ -32,10 +32,6 @@ RUN npm install --production
 # Copy built application from builder stage
 COPY --from=builder /app/build ./build
 
-# Copy any necessary config files
-COPY --from=builder /app/client_secret.json ./
-COPY --from=builder /app/client_oauth_token.json ./
-
 # Set environment variables
 ENV NODE_ENV=production
 
