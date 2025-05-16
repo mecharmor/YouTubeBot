@@ -3,6 +3,7 @@
 // https://archive.org/download/NeverGonnaGiveYouUp/jocofullinterview41.mp3
 
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import { AudioSample } from '../model.js';
 
 export function makeVideo({
@@ -40,7 +41,7 @@ export function makeVideo({
     ];
 
     return new Promise((res, rej) => {
-        const child: ChildProcessWithoutNullStreams = spawn('ffmpeg', args, {
+        const child: ChildProcessWithoutNullStreams = spawn(ffmpegInstaller.path, args, {
             shell: true,
         });
         child.stdout.on('data', (data: any) =>

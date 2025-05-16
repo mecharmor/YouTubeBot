@@ -4,55 +4,6 @@ import { FreeLoopsProps } from './freeLoopsModel.js';
 import { isDebugging } from '../helper/env.js';
 import puppeteer from 'puppeteer';
 
-// export async function fetchFreeLoopsPageHtml({
-//     term = 'sound effect',
-//     page = 1,
-// }: {
-//     readonly term: string;
-//     readonly page: number;
-// }) {
-//     const browser = await puppeteer.launch({
-//         headless: true,  // Make browser visible
-//         defaultViewport: null,  // Use default viewport size
-//         args: ['--start-maximized']  // Start maximized
-//     });
-//     const browserPage = await browser.newPage();
-    
-//     const url = constructFreeLoopsSearchUrl(term, page);
-//     await browserPage.goto(url, { waitUntil: 'networkidle0' })
-
-//     // Wait for the content to load
-//     await browserPage.waitForSelector('a', { timeout: 10000 });
-
-//     const content = await browserPage.content();
-//     await browser.close();
-//     if(isDebugging()) {
-//         writeFileSync('raw_page.html', content)
-//     }
-//     return content;
-// }
-
-// export function parseSourcesFromHtml(html: string): FreeLoopsProps[] {
-//     const sources: FreeLoopsProps[] = [];
-
-//     const domHandle = parse(html);
-//     const tags: HTMLElement[] = domHandle.querySelectorAll('[data-id]');
-//     isDebugging() && console.log(JSON.stringify({
-//         linksWithClass: domHandle.querySelectorAll('a[class]').length,
-//         audioLinks: domHandle.querySelectorAll('a.audio-link').length,
-//         linksWithDataId: domHandle.querySelectorAll('[data-id]').length,
-// }, null, 2 ));
-//     isDebugging() && console.log('pulled tags from page:', tags?.length)
-//     for (const { attributes } of tags) {
-//         const id = (attributes['data-id'] as any)?.value
-//         const title = 'sample title';
-//         isDebugging() && console.log('id:', id, 'title: ', title);
-//         id && title && sources.push({ id, title });
-//     }
-
-//     return sources;
-// }
-
 export function parseMaxPagination(html: string): number {
     const existingPages: number[] = parse(html)
         .querySelectorAll('td > .paged')
