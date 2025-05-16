@@ -36,4 +36,4 @@ COPY --from=builder /app/build ./build
 ENV NODE_ENV=production
 
 # Command to run the application
-CMD ["node", "build/index.js"] 
+CMD ["node", "build/src/main.js"] 
