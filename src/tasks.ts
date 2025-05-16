@@ -21,8 +21,9 @@ export function makeRandomVideoTask( [ hours, minutes, seconds ] : number[] ) : 
         return Promise.reject( 'No time specified!' );
     }
 
-    const CACHE_DIR = ensurePathEndsWithSlash( `./cache-${ ( new Date() ).toISOString() }-${ uniqueId() }` );
-    mkdirSync( CACHE_DIR );
+    const timestamp = (new Date()).toISOString().replace(/:/g, '_');
+    const CACHE_DIR = ensurePathEndsWithSlash(`./cache-${timestamp}-${uniqueId()}`);
+    mkdirSync(CACHE_DIR);
 
     return FindRandomSample()
     .then( ( sample : FreeLoopsProps ) => {

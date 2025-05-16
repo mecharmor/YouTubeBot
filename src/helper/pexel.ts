@@ -9,7 +9,7 @@ import {
 } from 'pexels';
 const { createClient } = pexels;
 import { resolve } from 'path';
-import { default as axios, AxiosResponse } from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { Stream } from 'stream';
 import { ensurePathEndsWithSlash } from './path.js';
 
@@ -53,7 +53,7 @@ export async function DownloadImageFromSearch(
         src: { landscape },
     } = photo as Photo;
 
-    const { data }: AxiosResponse<Stream> = await axios({
+    const { data }: AxiosResponse<Stream> = await axios.default({
         method: 'GET',
         url: landscape,
         responseType: 'stream',

@@ -1,39 +1,57 @@
 import { HTMLElement, parse } from 'node-html-parser';
-import { default as axios } from 'axios';
-import { KnownWorkingTerms, SEARCH_URL } from './freeLoopsConsts.js';
+import { KnownWorkingTerms, constructFreeLoopsSearchUrl } from './freeLoopsConsts.js';
 import { FreeLoopsProps } from './freeLoopsModel.js';
 import { isDebugging } from '../helper/env.js';
-const { get } = axios;
+import puppeteer from 'puppeteer';
 
-export function constructFreeLoopsSearchUrl(term: string, page = 1) {
-    if (!term) throw 'Must specify a term!';
+// export async function fetchFreeLoopsPageHtml({
+//     term = 'sound effect',
+//     page = 1,
+// }: {
+//     readonly term: string;
+//     readonly page: number;
+// }) {
+//     const browser = await puppeteer.launch({
+//         headless: true,  // Make browser visible
+//         defaultViewport: null,  // Use default viewport size
+//         args: ['--start-maximized']  // Start maximized
+//     });
+//     const browserPage = await browser.newPage();
+    
+//     const url = constructFreeLoopsSearchUrl(term, page);
+//     await browserPage.goto(url, { waitUntil: 'networkidle0' })
 
-    return `${SEARCH_URL}?term=${encodeURI(term)}&page=${page}`;
-}
+//     // Wait for the content to load
+//     await browserPage.waitForSelector('a', { timeout: 10000 });
 
-export async function fetchFreeLoopsPageHtml({
-    term = 'sound effect',
-    page = 1,
-}: {
-    readonly term: string;
-    readonly page: number;
-}) {
-    return (await get(constructFreeLoopsSearchUrl(term, page))).data;
-}
+//     const content = await browserPage.content();
+//     await browser.close();
+//     if(isDebugging()) {
+//         writeFileSync('raw_page.html', content)
+//     }
+//     return content;
+// }
 
-export function parseSourcesFromHtml(html: string): FreeLoopsProps[] {
-    const sources: FreeLoopsProps[] = [];
+// export function parseSourcesFromHtml(html: string): FreeLoopsProps[] {
+//     const sources: FreeLoopsProps[] = [];
 
-    const tags: HTMLElement[] = parse(html)
-        .querySelectorAll('.row-b > td:first-child > a')
-        .filter((tag: HTMLElement) => !!tag.innerText);
-    for (const { rawAttrs: hrefRaw, innerText: title } of tags) {
-        const [id] = hrefRaw.match(/(?<=href=')[0-9]*(?=-)/gmu) || [];
-        id && title && sources.push({ id, title });
-    }
+//     const domHandle = parse(html);
+//     const tags: HTMLElement[] = domHandle.querySelectorAll('[data-id]');
+//     isDebugging() && console.log(JSON.stringify({
+//         linksWithClass: domHandle.querySelectorAll('a[class]').length,
+//         audioLinks: domHandle.querySelectorAll('a.audio-link').length,
+//         linksWithDataId: domHandle.querySelectorAll('[data-id]').length,
+// }, null, 2 ));
+//     isDebugging() && console.log('pulled tags from page:', tags?.length)
+//     for (const { attributes } of tags) {
+//         const id = (attributes['data-id'] as any)?.value
+//         const title = 'sample title';
+//         isDebugging() && console.log('id:', id, 'title: ', title);
+//         id && title && sources.push({ id, title });
+//     }
 
-    return sources;
-}
+//     return sources;
+// }
 
 export function parseMaxPagination(html: string): number {
     const existingPages: number[] = parse(html)
@@ -55,9 +73,11 @@ export function parseMaxPagination(html: string): number {
 export async function getMaxPageCountForSearchTerm(
     searchTerm: string
 ): Promise<number> {
-    return parseMaxPagination(
-        await fetchFreeLoopsPageHtml({ term: searchTerm, page: 1 })
-    );
+    searchTerm;
+    return 1
+    // return parseMaxPagination(
+    //     await fetchFreeLoopsPageHtml({ term: searchTerm, page: 1 })
+    // );
 }
 
 export async function getAudioUrls(
@@ -71,7 +91,46 @@ export async function getAudioUrls(
             );
     }
 
-    return parseSourcesFromHtml(
-        await fetchFreeLoopsPageHtml({ term: searchTerm, page })
-    );
+    const browser = await puppeteer.launch({
+        headless: true,
+        defaultViewport: null,
+        args: ['--start-maximized']
+    });
+    const browserPage = await browser.newPage();
+    
+    const url = constructFreeLoopsSearchUrl(searchTerm, page);
+    await browserPage.goto(url, { waitUntil: 'networkidle0' });
+
+    // Wait for the content to load
+    await browserPage.waitForSelector('table.standard-table', { timeout: 10000 });
+
+    // Extract data using page.evaluate
+    const results = await browserPage.evaluate(() => {
+        const rows = Array.from(document.querySelectorAll('table.standard-table tr'));
+        
+        // Skip header row
+        return rows.slice(1).map(row => {
+            const titleLink = row.querySelector('td:first-child a');
+            const downloadLink = row.querySelector('a.audio-link');
+            console.log(`Row:`, {
+                titleLink,
+                downloadLink,
+               id: downloadLink?.getAttribute('data-id') || '',
+            title: titleLink?.textContent?.trim() || ''
+            });
+            return {
+                id: downloadLink?.getAttribute('data-id') || '',
+                title: titleLink?.textContent?.trim() || ''
+            };
+        }).filter(item => item.id && item.title);
+    });
+
+    await browser.close();
+    
+    if(isDebugging()) {
+        console.log('Found items:', results.length);
+        console.log('Sample items:', results.slice(0, 3));
+    }
+
+    return results;
 }

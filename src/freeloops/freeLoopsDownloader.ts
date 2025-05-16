@@ -1,6 +1,5 @@
 import fs from 'fs';
-import {
-    default as axios,
+import axios, {
     AxiosPromise,
     AxiosResponse,
     AxiosRequestConfig,
@@ -25,7 +24,7 @@ export function downloadFromFreeLoops(
     id: string,
     overrideConfig?: Partial<AxiosRequestConfig>
 ): AxiosPromise<Stream> {
-    return axios({
+    return axios.default({
         method: 'GET',
         url: constructDownloadUrl(id),
         responseType: 'stream',
@@ -46,7 +45,7 @@ export interface FreeLoopsError {
 
 export async function FindRandomSample(
     recurseCount = 0,
-    maxRecurse = 10
+    maxRecurse = 4
 ): Promise<FreeLoopsProps> {
     const randomTerm: string = pickRandomElem(KnownWorkingTerms);
     const maxPageCount: number = await getMaxPageCountForSearchTerm(randomTerm);
@@ -62,7 +61,7 @@ export async function FindRandomSample(
         return FindRandomSample(recurseCount + 1, maxRecurse);
     }
 
-    const randomPage: number = Math.floor(Math.random() * maxPageCount);
+    const randomPage: number = Math.max(Math.floor(Math.random() * maxPageCount), 1);
 
     const records: FreeLoopsProps[] = await getAudioUrls(
         randomTerm,
