@@ -12,6 +12,7 @@ import { resolve } from 'path';
 import { default as googleapis } from 'googleapis';
 const { google } = googleapis;
 import { VideoSample } from '../model.js';
+import { isDebugging } from './env.js';
 const OAuth2 = google.auth.OAuth2;
 
 // video category IDs for YouTube:
@@ -83,8 +84,46 @@ function uploadVideo(
     }: YouTubeVideo
 ): Promise<string | any> {
     const service = google.youtube('v3');
+    console.log('=== Starting YouTube Upload Process ===');
+    console.log('Video details:', {
+        title,
+        descriptionLength: description.length,
+        tags,
+        videoPath: fullPath,
+        thumbnailPath
+    });
+
+    // Get file sizes for progress calculation
+    const videoSize = fs.statSync(fullPath).size;
+    const thumbnailSize = fs.statSync(thumbnailPath).size;
+    console.log('File sizes:', {
+        videoSize: `${(videoSize / (1024 * 1024)).toFixed(2)} MB`,
+        thumbnailSize: `${(thumbnailSize / (1024 * 1024)).toFixed(2)} MB`
+    });
 
     return new Promise((resolve, reject) => {
+        console.log('Initiating video upload request...');
+        
+        // Create a readable stream with optimized settings
+        const videoStream = fs.createReadStream(fullPath, {
+            highWaterMark: 1024 * 1024 * 5, // 5MB chunks for better performance
+            autoClose: true
+        });
+        let bytesUploaded = 0;
+        let lastProgressLog = Date.now();
+        
+        videoStream.on('data', (chunk) => {
+            bytesUploaded += chunk.length;
+            const now = Date.now();
+            // Only log progress every 2 seconds to reduce console spam
+            if (now - lastProgressLog > 2000) {
+                const progress = (bytesUploaded / videoSize) * 100;
+                const speed = (bytesUploaded / ((now - lastProgressLog) / 1000)) / (1024 * 1024); // MB/s
+                console.log(`Video upload progress: ${progress.toFixed(2)}% (${(bytesUploaded / (1024 * 1024)).toFixed(2)} MB / ${(videoSize / (1024 * 1024)).toFixed(2)} MB) - Speed: ${speed.toFixed(2)} MB/s`);
+                lastProgressLog = now;
+            }
+        });
+
         service.videos.insert(
             {
                 auth,
@@ -103,31 +142,78 @@ function uploadVideo(
                     },
                 },
                 media: {
-                    body: fs.createReadStream(fullPath),
+                    body: videoStream,
                 },
             },
             function (err, response): void {
                 if (err) {
+                    isDebugging() && console.error('=== Video Upload Error ===');
+                    isDebugging() && console.error('Error details:', {
+                        message: err.message,
+                        code: err.code,
+                        errors: err.errors,
+                        status: err.status
+                    });
                     reject(`Failed to upload youtube video: ${err}`);
                     return;
                 }
 
-                // console.log(response.data);
-                // console.log('Video uploaded. Uploading the thumbnail now.');
+                isDebugging() && console.log('=== Video Upload Success ===');
+                isDebugging() && console.log('Response data:', {
+                    videoId: response.data.id,
+                    status: response.status,
+                    statusText: response.statusText
+                });
+                isDebugging() && console.log('Starting thumbnail upload...');
+                
+                isDebugging() && console.log('Initiating thumbnail upload request...');
+                
+                // Create a readable stream with optimized settings for thumbnail
+                const thumbnailStream = fs.createReadStream(thumbnailPath, {
+                    highWaterMark: 1024 * 1024, // 1MB chunks for thumbnail
+                    autoClose: true
+                });
+                let thumbnailBytesUploaded = 0;
+                let lastThumbnailProgressLog = Date.now();
+                
+                thumbnailStream.on('data', (chunk) => {
+                    thumbnailBytesUploaded += chunk.length;
+                    const now = Date.now();
+                    // Only log progress every 2 seconds
+                    if (now - lastThumbnailProgressLog > 2000) {
+                        const progress = (thumbnailBytesUploaded / thumbnailSize) * 100;
+                        const speed = (thumbnailBytesUploaded / ((now - lastThumbnailProgressLog) / 1000)) / (1024 * 1024); // MB/s
+                        console.log(`Thumbnail upload progress: ${progress.toFixed(2)}% (${(thumbnailBytesUploaded / (1024 * 1024)).toFixed(2)} MB / ${(thumbnailSize / (1024 * 1024)).toFixed(2)} MB) - Speed: ${speed.toFixed(2)} MB/s`);
+                        lastThumbnailProgressLog = now;
+                    }
+                });
+
                 service.thumbnails.set(
                     {
                         auth,
                         videoId: response.data.id,
                         media: {
-                            body: fs.createReadStream(thumbnailPath),
+                            body: thumbnailStream,
                         },
                     },
                     function (err, response): void {
                         if (err) {
+                            isDebugging() && console.error('=== Thumbnail Upload Error ===');
+                            isDebugging() && console.error('Error details:', {
+                                message: err.message,
+                                code: err.code,
+                                errors: err.errors,
+                                status: err.status
+                            });
                             reject(`Failed to set thumbnail: ${err}`);
                             return;
                         }
 
+                        isDebugging() && console.log('=== Thumbnail Upload Success ===');
+                        isDebugging() && console.log('Response data:', {
+                            status: response.status,
+                            statusText: response.statusText
+                        });
                         resolve(response);
                     }
                 );
