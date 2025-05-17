@@ -15,7 +15,7 @@ export function shouldUploadVideoForEveryHourInDuration(): boolean {
     );
 }
 
-export function getRandomDurationFromEnv(): number {
+export function getRandomHourDurationFromEnv(): number {
     const max = Number(parseInt(process.env.RANDOM_DURATION_HOUR_MAX || '0'));
     const min = Number(parseInt(process.env.RANDOM_DURATION_HOUR_MIN || '0'));
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -24,9 +24,9 @@ export function getRandomDurationFromEnv(): number {
 export function getDurationFromEnv(): number[] {
     if(process.env.SHOULD_USE_RANDOM_DURATION) {
         return [
-            getRandomDurationFromEnv(),
-            getRandomDurationFromEnv(),
-            getRandomDurationFromEnv()
+            getRandomHourDurationFromEnv(),
+            Number(process.env.DURATION_MINUTES),
+            Number(process.env.DURATION_SECONDS),
         ]
     }
 
