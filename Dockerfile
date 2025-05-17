@@ -59,8 +59,10 @@ ENV NODE_ENV=production
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# Create data directory for persistent storage
-RUN mkdir -p /app/data && chown -R node:node /app/data
+# Create data directory and set permissions
+RUN mkdir -p /app/data /app/build/src && \
+    chown -R node:node /app/data /app/build/src && \
+    chmod -R 755 /app/data /app/build/src
 
 # Create startup script
 RUN echo '#!/bin/sh\n\
@@ -74,12 +76,10 @@ elif [ -f /app/.env.sample ]; then\n\
   echo "Created .env from sample file"\n\
 fi\n\
 \n\
-# Ensure data directory exists and has correct permissions\n\
-mkdir -p /app/data\n\
-chown -R node:node /app/data\n\
-\n\
 # Start the application as non-root user\n\
-exec node build/src/main.js' > /app/start.sh && chmod +x /app/start.sh
+exec node build/src/main.js' > /app/start.sh && \
+    chmod +x /app/start.sh && \
+    chown node:node /app/start.sh
 
 # Switch to non-root user
 USER node
