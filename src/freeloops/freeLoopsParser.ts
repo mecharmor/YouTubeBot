@@ -45,7 +45,7 @@ export async function getAudioUrls(
     const browser = await puppeteer.launch({
         headless: true,
         defaultViewport: null,
-        args: ['--start-maximized']
+        args: ['--start-maximized', '--no-sandbox', '--disable-setuid-sandbox']
     });
     const browserPage = await browser.newPage();
     
