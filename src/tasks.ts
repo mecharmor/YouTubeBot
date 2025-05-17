@@ -13,6 +13,7 @@ import { padZero } from './helper/time.js';
 import lodash from 'lodash';
 const { uniqueId } = lodash;
 import { upload2YouTube } from './helper/youtube.js';
+import { generateDescription, generateTitle } from './helper/openai.js';
 const THUMBNAIL_NAME = 'image.jpeg';
 
 export function makeRandomVideoTask( [ hours, minutes, seconds ] : number[] ) : Promise<void> {
@@ -66,7 +67,7 @@ export function makeRandomVideoTask( [ hours, minutes, seconds ] : number[] ) : 
             },
         } ) );
     } )
-    .then( ( {
+    .then( async ( {
         thumbnailPath,
         outputFilePath,
         audio,
@@ -77,11 +78,13 @@ export function makeRandomVideoTask( [ hours, minutes, seconds ] : number[] ) : 
         audio : FreeLoopsAudio,
         duration : { hours : number, minutes : number, seconds : number },
     } ) => {
+        const title = await generateTitle(makeTitle( {
+            hours, minutes, seconds, fileName : audio.fileName
+        } ))
+        const description = await generateDescription(title)
         return upload2YouTube( {
-            title : makeTitle( {
-                hours, minutes, seconds, fileName : audio.fileName
-            } ),
-            description : 'Like and Subscribe for more content!',
+            title,
+            description,
             video : {
                 fullPath : outputFilePath,
                 thumbnailPath : thumbnailPath,

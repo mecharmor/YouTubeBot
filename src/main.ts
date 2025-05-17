@@ -22,8 +22,10 @@ async function makeRandomVideoTaskRecurse( hours : number, minutes : number, sec
 }
 
 const [ hours, minutes, seconds ] : number[] = getDurationFromEnv();
-if( shouldUploadVideoForEveryHourInDuration() && hours > 1 ) {
-    makeRandomVideoTaskRecurse( hours, minutes, seconds );
-} else {
-    makeRandomVideoTask( [ hours, minutes, seconds ] );
+if(process.env.SOME_UNUSED_KEY) {
+    if( shouldUploadVideoForEveryHourInDuration() && hours > 1 ) {
+        makeRandomVideoTaskRecurse( hours, minutes, seconds );
+    } else {
+        makeRandomVideoTask( [ hours, minutes, seconds ] );
+    }
 }
