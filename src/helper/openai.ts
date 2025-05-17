@@ -34,16 +34,50 @@ function makeAiRequest(context: string) {
     });
 }
 
+function normalizeDescription(description: string): string {
+    // Remove any markdown or special formatting
+    let normalized = description.replace(/[*_~`#]/g, '');
+    
+    // Replace multiple newlines with a single one
+    normalized = normalized.replace(/\n{3,}/g, '\n\n');
+    
+    // Trim whitespace and ensure it's not too long (YouTube's limit is 5000 chars)
+    normalized = normalized.trim();
+    if (normalized.length > 5000) {
+        normalized = normalized.substring(0, 4997) + '...';
+    }
+    
+    return normalized;
+}
+
+function normalizeTitle(title: string): string {
+    // Remove any markdown or special formatting
+    let normalized = title.replace(/[*_~`#]/g, '');
+    
+    // Remove any emojis or special characters
+    normalized = normalized.replace(/[\u{1F300}-\u{1F9FF}]/gu, '');
+    
+    // Replace multiple spaces with a single space
+    normalized = normalized.replace(/\s+/g, ' ');
+    
+    // Trim whitespace and ensure it's not too long (YouTube's limit is 100 chars)
+    normalized = normalized.trim();
+    if (normalized.length > 100) {
+        normalized = normalized.substring(0, 97) + '...';
+    }
+    
+    return normalized;
+}
 
 export async function generateTitle(denormalizedTitle: string) {
     try {
         const res = await makeAiRequest(`Generate me an eye catching youtube title.
         For context this video is a certain amount of time of a sound.
         here is the denormalized title I tried to use "${denormalizedTitle}".
-        Only respond with the title you are requested
+        only respond with the video title and nothing else!
         `)
 
-        return res;
+        return normalizeTitle(res);
     }catch(_) {
         isDebugging() && console.error("Failed to use AI generated title. falling back...")
         return denormalizedTitle
@@ -55,10 +89,10 @@ export async function generateDescription(denormalizedTitle: string) {
         const res = await makeAiRequest(`Generate me a youtube video description with search keywords for sound effects
         For context this video is a certain amount of time of a sound.
         here is the video title: "${denormalizedTitle}".
-        Only respond with the video description you are requested.
+        only respond with the video description and nothing else!
         `)
 
-        return res;
+        return normalizeDescription(res);
     }catch(_) {
         isDebugging() && console.error("Failed to use AI generated title. falling back...")
         return denormalizedTitle
