@@ -59,6 +59,9 @@ function normalizeTitle(title: string): string {
     
     // Replace multiple spaces with a single space
     normalized = normalized.replace(/\s+/g, ' ');
+
+    // replace double quotes
+    normalized = normalized.replaceAll("\"", "")
     
     // Trim whitespace and ensure it's not too long (YouTube's limit is 100 chars)
     normalized = normalized.trim();
