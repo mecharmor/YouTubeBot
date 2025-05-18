@@ -19,15 +19,21 @@ import {
     getMaxPageCountForSearchTerm,
 } from './freeLoopsParser.js';
 import { isDebugging } from '../helper/env.js';
+import https from 'https';
 
 export function downloadFromFreeLoops(
     id: string,
     overrideConfig?: Partial<AxiosRequestConfig>
 ): AxiosPromise<Stream> {
+    const httpsAgent = new https.Agent({
+        rejectUnauthorized: false
+    });
+
     return axios.default({
         method: 'GET',
         url: constructDownloadUrl(id),
         responseType: 'stream',
+        httpsAgent,
         ...overrideConfig,
     });
 }
