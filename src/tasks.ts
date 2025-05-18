@@ -84,7 +84,7 @@ export function makeRandomVideoTask( [ hours, minutes, seconds ] : number[] ) : 
         const description = await generateDescription(title)
         return upload2YouTube( {
             title,
-            description: description + " Credit to https://free-loops.com/",
+            description: description + " Credit to free-loops.com for source",
             video : {
                 fullPath : outputFilePath,
                 thumbnailPath : thumbnailPath,
