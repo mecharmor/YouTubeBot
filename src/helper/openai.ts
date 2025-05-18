@@ -38,6 +38,12 @@ function normalizeDescription(description: string): string {
     // Remove any markdown or special formatting
     let normalized = description.replace(/[*_~`#]/g, '');
     
+    // Remove everything before and including the first colon
+    // battling weird free deepseek stuff
+    if(normalized.startsWith("Sure")) {
+        normalized = normalized.replace(/^[^:]*:\s*/, '');
+    }
+    
     // Replace multiple newlines with a single one
     normalized = normalized.replace(/\n{3,}/g, '\n\n');
     
