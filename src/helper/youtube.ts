@@ -139,8 +139,8 @@ function uploadVideo(
                     },
                     status: {
                         privacyStatus: 'public',
-                        selfDeclaredMadeForKids: true,
-                        madeForKids: true,
+                        selfDeclaredMadeForKids: false,
+                        madeForKids: false,
                         embeddable: true,
                         publicStatsViewable: true
                     },
