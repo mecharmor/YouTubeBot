@@ -42,85 +42,64 @@ export async function getAudioUrls(
             );
     }
 
-    let browser;
-    try {
-        browser = await puppeteer.launch({
-            headless: true,
-            defaultViewport: null,
-            args: [
-                '--start-maximized',
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--disable-gpu',
-                '--no-first-run',
-                '--no-zygote',
-                '--single-process',
-                '--ignore-certificate-errors',
-                '--ignore-certificate-errors-spki-list'
-            ],
-            timeout: 30000
-        });
-        const browserPage = await browser.newPage();
+    const browser = await puppeteer.launch({
+        headless: true,
+        defaultViewport: null,
+        args: [
+            '--start-maximized',
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--disable-gpu',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--ignore-certificate-errors',
+            '--ignore-certificate-errors-spki-list',
+            '--allow-running-insecure-content',
+            '--disable-web-security',
+            '--reduce-security-for-testing',
+            '--disable-features=IsolateOrigins,site-per-process',
+            '--disable-site-isolation-trials'
+        ],
+        timeout: 30000
+    });
+    const browserPage = await browser.newPage();
+    
+    const url = constructFreeLoopsSearchUrl(searchTerm, page);
+    await browserPage.goto(url, { waitUntil: 'networkidle0' });
+
+    // Wait for the content to load
+    await browserPage.waitForSelector('table.standard-table', { timeout: 10000 });
+
+    // Extract data using page.evaluate
+    const results = await browserPage.evaluate(() => {
+        const rows = Array.from(document.querySelectorAll('table.standard-table tr'));
         
-        // Set a longer default timeout
-        browserPage.setDefaultTimeout(30000);
-        
-        const url = constructFreeLoopsSearchUrl(searchTerm, page);
-        
-        // Wait for navigation to complete
-        await browserPage.goto(url, { 
-            waitUntil: ['networkidle0', 'domcontentloaded'],
-            timeout: 30000 
-        });
+        // Skip header row
+        return rows.slice(1).map(row => {
+            const titleLink = row.querySelector('td:first-child a');
+            const downloadLink = row.querySelector('a.audio-link');
+            console.log(`Row:`, {
+                titleLink,
+                downloadLink,
+               id: downloadLink?.getAttribute('data-id') || '',
+            title: titleLink?.textContent?.trim() || ''
+            });
+            return {
+                id: downloadLink?.getAttribute('data-id') || '',
+                title: titleLink?.textContent?.trim() || ''
+            };
+        }).filter(item => item.id && item.title);
+    });
 
-        // Wait for the content to load with retry logic
-        let retries = 3;
-        while (retries > 0) {
-            try {
-                await browserPage.waitForSelector('table.standard-table', { timeout: 10000 });
-                break;
-            } catch (error) {
-                retries--;
-                if (retries === 0) throw error;
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-        }
-
-        // Extract data using page.evaluate
-        const results = await browserPage.evaluate(() => {
-            const rows = Array.from(document.querySelectorAll('table.standard-table tr'));
-            
-            // Skip header row
-            return rows.slice(1).map(row => {
-                const titleLink = row.querySelector('td:first-child a');
-                const downloadLink = row.querySelector('a.audio-link');
-                console.log(`Row:`, {
-                    titleLink,
-                    downloadLink,
-                    id: downloadLink?.getAttribute('data-id') || '',
-                    title: titleLink?.textContent?.trim() || ''
-                });
-                return {
-                    id: downloadLink?.getAttribute('data-id') || '',
-                    title: titleLink?.textContent?.trim() || ''
-                };
-            }).filter(item => item.id && item.title);
-        });
-
-        if(isDebugging()) {
-            console.log('Found items:', results.length);
-            console.log('Sample items:', results.slice(0, 3));
-        }
-
-        return results;
-    } catch (error) {
-        isDebugging() && console.error('Error in getAudioUrls:', error);
-        throw error;
-    } finally {
-        if (browser) {
-            await browser.close();
-        }
+    await browser.close();
+    
+    if(isDebugging()) {
+        console.log('Found items:', results.length);
+        console.log('Sample items:', results.slice(0, 3));
     }
+
+    return results;
 }
