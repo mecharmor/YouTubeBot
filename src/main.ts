@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import { makeRandomVideoTask } from './tasks.js';
-import { getDurationFromEnv, shouldUploadVideoForEveryHourInDuration } from './helper/env.js';
+import { getDurationFromEnv, isDebugging, shouldUploadVideoForEveryHourInDuration } from './helper/env.js';
 import { makeTitle } from './helper/string.js';
 
 async function makeRandomVideoTaskRecurse( hours : number, minutes : number, seconds: number, currentHours  = 1 ) {
@@ -22,8 +22,11 @@ async function makeRandomVideoTaskRecurse( hours : number, minutes : number, sec
 }
 
 const [ hours, minutes, seconds ] : number[] = getDurationFromEnv();
+
 if( shouldUploadVideoForEveryHourInDuration() && hours > 1 ) {
+    isDebugging() && console.log("Running recursive workflow")
     makeRandomVideoTaskRecurse( hours, minutes, seconds );
 } else {
+    isDebugging() && console.log(`Generating with duration: HH:MM:SS as ${hours}:${minutes}:${seconds}`)
     makeRandomVideoTask( [ hours, minutes, seconds ] );
 }
