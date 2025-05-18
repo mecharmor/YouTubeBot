@@ -18,7 +18,19 @@ export const KnownWorkingTerms: string[] = [
     'water',
     'test',
     'guitar',
-    'robot',
+    // 'robot',
     'meow',
-    'slap'
+    // 'slap',
+    'noise',
+    'background',
+    'sound',
+    'effect',
+    'fire crackle',
+    'crackle',
+    'nature',
+    'bird',
+    'small',
+    'white',
+    'brown',
+    'loop'
 ];

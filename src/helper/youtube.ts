@@ -139,6 +139,10 @@ function uploadVideo(
                     },
                     status: {
                         privacyStatus: 'public',
+                        selfDeclaredMadeForKids: true,
+                        madeForKids: true,
+                        embeddable: true,
+                        publicStatsViewable: true
                     },
                 },
                 media: {
