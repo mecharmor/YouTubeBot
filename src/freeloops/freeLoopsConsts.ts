@@ -32,5 +32,14 @@ export const KnownWorkingTerms: string[] = [
     'small',
     'white',
     'brown',
-    'loop'
+    'loop',
+    'rain',
+    'background',
+    'atmospheric',
+    'forest',
+    'creative commons',
+    'soundscapes',
+    'city',
+    'high quality',
+    'royalty'
 ];
