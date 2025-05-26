@@ -1,11 +1,10 @@
-import { HTMLElement, parse } from 'node-html-parser';
 import { KnownWorkingTerms, constructFreeLoopsSearchUrl } from './freeLoopsConsts.js';
 import { FreeLoopsProps } from './freeLoopsModel.js';
 import { isDebugging } from '../helper/env.js';
 import puppeteer from 'puppeteer';
 
 const puppeteerOptions = {
-    headless: false,
+    headless: true,
     defaultViewport: null,
     args: [
         '--start-maximized',

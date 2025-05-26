@@ -68,6 +68,7 @@ export async function FindRandomSample(
     }
 
     const randomPage: number = Math.max(Math.floor(Math.random() * maxPageCount), 1);
+    isDebugging() && console.log("Using page ", randomPage)
 
     const records: FreeLoopsProps[] = await getAudioUrls(
         randomTerm,

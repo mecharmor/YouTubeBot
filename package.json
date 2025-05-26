@@ -24,6 +24,7 @@
     "scripts": {
         "prestart": "npm run build",
         "start": "node build/src/main.js",
+        "run:parser": "npm run build && node build/src/freeloops/freeLoopsParser.js",
         "clean": "rimraf coverage build tmp",
         "prebuild": "npm run lint",
         "build": "tsc -p tsconfig.json",

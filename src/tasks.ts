@@ -14,9 +14,10 @@ import lodash from 'lodash';
 const { uniqueId } = lodash;
 import { upload2YouTube } from './helper/youtube.js';
 import { generateDescription, generateTitle } from './helper/openai.js';
+import { sendDiscordUpdate } from './helper/discord.js';
 const THUMBNAIL_NAME = 'image.jpeg';
 
-export function makeRandomVideoTask( [ hours, minutes, seconds ] : number[] ) : Promise<void> {
+export function makeRandomVideoTask( [ hours, minutes, seconds ] : number[] ) {
     if( hours == 0 && minutes == 0 && seconds == 0 ) {
         isDebugging() && console.log( 'No time specified!' );
         return Promise.reject( 'No time specified!' );
@@ -32,6 +33,13 @@ export function makeRandomVideoTask( [ hours, minutes, seconds ] : number[] ) : 
             return Promise.reject( 'Finding a random sample audio failed even after retrying multiple times' );
         }
     
+        sendDiscordUpdate({
+            status: 'started',
+            message: `Starting video generation for ${sample.title} with a runtime of ${hours}:${minutes}:${seconds}`,
+            details: {
+                timestamp
+            }
+        })
         console.log( `Downloading ${ sample.title }...` );
         return DownloadFreeLoopsAudio( {
             path : CACHE_DIR,
@@ -91,7 +99,23 @@ export function makeRandomVideoTask( [ hours, minutes, seconds ] : number[] ) : 
             }
         } )
     } )
-    .catch( e => console.log( e ) )
+    .then( ( videoUrl : string ) => {
+        sendDiscordUpdate({
+            status: 'completed',
+            message: `Uploaded to YouTube at ${videoUrl}`,
+        })
+        return videoUrl;
+    } )
+    .catch( e => {
+        console.log( e )
+        sendDiscordUpdate({
+            status: 'error',
+            message: `Failed to create video`,
+            details: {
+                error: e
+            }
+        })
+    } )
     .finally( () => {
         !cacheCleanupDisabled() && rmdirSync( CACHE_DIR, { recursive : true } );
     } )

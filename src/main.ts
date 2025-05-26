@@ -25,8 +25,8 @@ const [ hours, minutes, seconds ] : number[] = getDurationFromEnv();
 
 if( shouldUploadVideoForEveryHourInDuration() && hours > 1 ) {
     isDebugging() && console.log("Running recursive workflow")
-    makeRandomVideoTaskRecurse( hours, minutes, seconds );
+    await makeRandomVideoTaskRecurse( hours, minutes, seconds );
 } else {
     isDebugging() && console.log(`Generating with duration: HH:MM:SS as ${hours}:${minutes}:${seconds}`)
-    makeRandomVideoTask( [ hours, minutes, seconds ] );
+    await makeRandomVideoTask( [ hours, minutes, seconds ] );
 }

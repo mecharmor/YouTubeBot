@@ -33,9 +33,10 @@ export interface YouTubeVideo {
     readonly video: Pick<VideoSample, 'fullPath' | 'thumbnailPath'>;
 }
 
+type YouTubeVideoUrl = string;
 export function upload2YouTube(
     youTubeVideo: YouTubeVideo
-): Promise<string | any> {
+): Promise<YouTubeVideoUrl | any> {
     return new Promise((res, rej) => {
         const {
             video: { fullPath, thumbnailPath },
@@ -61,7 +62,11 @@ export function upload2YouTube(
                 // Authorize a client with the loaded credentials, then call the YouTube API.
                 authorize(JSON.parse(content as any), (auth) =>
                     uploadVideo(auth, youTubeVideo)
-                        .then((r: any) => res(r))
+                        .then((response: any) => {
+                            const videoId = response.data.id;
+                            const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+                            res(videoUrl);
+                        })
                         .catch((err: any) => rej(err))
                 );
             }
