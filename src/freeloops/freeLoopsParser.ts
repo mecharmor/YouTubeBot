@@ -4,31 +4,69 @@ import { FreeLoopsProps } from './freeLoopsModel.js';
 import { isDebugging } from '../helper/env.js';
 import puppeteer from 'puppeteer';
 
-export function parseMaxPagination(html: string): number {
-    const existingPages: number[] = parse(html)
-        .querySelectorAll('td > .paged')
-        .map((elem: HTMLElement) => {
-            const pagedNumber = Number(elem.innerText);
-            if (Number.isNaN(pagedNumber)) {
-                isDebugging() &&
-                    console.warn(
-                        `Somehow we parsed a NaN from ${elem.innerText}`
-                    );
-                return 0;
-            }
-            return pagedNumber;
-        });
-    return Math.max(...existingPages);
-}
+const puppeteerOptions = {
+    headless: false,
+    defaultViewport: null,
+    args: [
+        '--start-maximized',
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--ignore-certificate-errors',
+        '--ignore-certificate-errors-spki-list',
+        '--allow-running-insecure-content',
+        '--disable-web-security',
+        '--reduce-security-for-testing',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--disable-site-isolation-trials'
+    ],
+    timeout: 30000
+};
 
 export async function getMaxPageCountForSearchTerm(
-    searchTerm: string
+    searchTerm: string,
 ): Promise<number> {
-    searchTerm;
-    return 1
-    // return parseMaxPagination(
-    //     await fetchFreeLoopsPageHtml({ term: searchTerm, page: 1 })
-    // );
+    const browser = await puppeteer.launch(puppeteerOptions);
+    const browserPage = await browser.newPage();
+    isDebugging() && console.log("Launching browser...")
+    const url = constructFreeLoopsSearchUrl(searchTerm, 1);
+    await browserPage.goto(url, { waitUntil: 'networkidle0' });
+
+    // Wait for the content to load
+    isDebugging() && console.log("Waiting for content to render in browser...")
+    await browserPage.waitForSelector('table.standard-table', { timeout: 10000 });
+
+    // Extract the last page number from pagination
+    isDebugging() && console.log("Starting page extraction...");
+    
+    const maxPage = await browserPage.evaluate(() => {
+        const paginationLinks = Array.from(document.querySelectorAll('div.pagination a'));
+        console.log("Pagination links:", paginationLinks)
+        const lastLink = paginationLinks[paginationLinks.length - 1];
+        console.log("Last link:", lastLink)
+        const href = lastLink.getAttribute('href');
+        const pageMatch = href?.match(/page=(\d+)/);
+        const pageNumber = pageMatch ? Number(pageMatch[1]) : 0;
+        console.log("Page number:", pageNumber)
+        return pageNumber;
+    });
+
+    isDebugging() && console.log("Extracted max page:", maxPage);
+    isDebugging() && console.log("Closing browser...");
+
+    await browser.close();
+
+    if(maxPage === 0 || Number.isNaN(maxPage)) {
+        console.error("Failed to extract max page number. falling back to 1")
+        return 1;
+    }
+
+    return maxPage;
 }
 
 export async function getAudioUrls(
@@ -42,35 +80,15 @@ export async function getAudioUrls(
             );
     }
 
-    const browser = await puppeteer.launch({
-        headless: true,
-        defaultViewport: null,
-        args: [
-            '--start-maximized',
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--disable-gpu',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process',
-            '--ignore-certificate-errors',
-            '--ignore-certificate-errors-spki-list',
-            '--allow-running-insecure-content',
-            '--disable-web-security',
-            '--reduce-security-for-testing',
-            '--disable-features=IsolateOrigins,site-per-process',
-            '--disable-site-isolation-trials'
-        ],
-        timeout: 30000
-    });
+    isDebugging() && console.log("Launching browser...")
+    const browser = await puppeteer.launch(puppeteerOptions);
     const browserPage = await browser.newPage();
     
     const url = constructFreeLoopsSearchUrl(searchTerm, page);
     await browserPage.goto(url, { waitUntil: 'networkidle0' });
 
     // Wait for the content to load
+    isDebugging() && console.log("Waiting for content to render in browser...")
     await browserPage.waitForSelector('table.standard-table', { timeout: 10000 });
 
     // Extract data using page.evaluate
