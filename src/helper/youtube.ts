@@ -205,7 +205,7 @@ function uploadVideo(
                             body: thumbnailStream,
                         },
                     },
-                    function (err, response): void {
+                    function (err, r): void {
                         if (err) {
                             isDebugging() && console.error('=== Thumbnail Upload Error ===');
                             isDebugging() && console.error('Error details:', {
@@ -220,8 +220,8 @@ function uploadVideo(
 
                         isDebugging() && console.log('=== Thumbnail Upload Success ===');
                         isDebugging() && console.log('Response data:', {
-                            status: response.status,
-                            statusText: response.statusText
+                            status: r.status,
+                            statusText: r.statusText
                         });
                         resolve(response);
                     }

@@ -83,7 +83,8 @@ export async function generateTitle(denormalizedTitle: string) {
         const res = await makeAiRequest(`Take this and turn it into a youtube video title: "${denormalizedTitle}".
 It is required that you only respond with the title, no special formatting, or quotes.
 Example Input: "1 hour of underwater sounds"
-Example Output: "1 Hour of Underwater Sounds"`)
+Example Output: "1 Hour of Underwater Sounds"
+Respond with the title only!`)
 
         return normalizeTitle(res);
     }catch(_) {
@@ -96,7 +97,8 @@ export async function generateDescription(denormalizedTitle: string) {
     try {
         const res = await makeAiRequest(`Take this YouTube video title and generate me a video description: "${denormalizedTitle}".
 Rules: No double quotes
-Requirements: Must be descriptive, include exhaustive keywords for search`)
+Requirements: Must be descriptive, include exhaustive keywords for search.
+Please respond with the description only!`)
 
         return normalizeDescription(res);
     }catch(_) {
