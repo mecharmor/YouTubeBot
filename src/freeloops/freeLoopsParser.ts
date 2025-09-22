@@ -1,4 +1,4 @@
-import { KnownWorkingTerms, constructFreeLoopsSearchUrl } from './freeLoopsConsts.js';
+import { KnownWorkingTerms, constructFreeLoopsSearchUrl, isTitleBlacklisted } from './freeLoopsConsts.js';
 import { FreeLoopsProps } from './freeLoopsModel.js';
 import { isDebugging } from '../helper/env.js';
 import puppeteer from 'puppeteer';
@@ -112,8 +112,8 @@ export async function getAudioUrls(
                 id: downloadLink?.getAttribute('data-id') || '',
                 title: titleLink?.textContent?.trim() || ''
             };
-        }).filter(item => item.id && item.title);
-    });
+        });
+    })
 
     await browser.close();
     
@@ -122,5 +122,16 @@ export async function getAudioUrls(
         console.log('Sample items:', results.slice(0, 3));
     }
 
-    return results;
+    return results.filter(item => {
+        // Filter out items without id or title
+        if (!item.id || !item.title) return false;
+        
+        // Filter out blacklisted titles
+        if (isTitleBlacklisted(item.title)) {
+            isDebugging() && console.log(`Filtered out blacklisted title: "${item.title}"`);
+            return false;
+        }
+        
+        return true;
+    });
 }

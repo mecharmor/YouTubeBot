@@ -4,7 +4,7 @@ import axios, {
     AxiosResponse,
     AxiosRequestConfig,
 } from 'axios';
-import { constructDownloadUrl, KnownWorkingTerms } from './freeLoopsConsts.js';
+import { constructDownloadUrl, isTitleBlacklisted, KnownWorkingTerms } from './freeLoopsConsts.js';
 import { FreeLoopsProps } from './freeLoopsModel.js';
 import { extname } from 'path';
 import { Stream } from 'stream';
@@ -80,12 +80,12 @@ export async function FindRandomSample(
     const records: FreeLoopsProps[] = await getAudioUrls(
         randomTerm,
         randomPage
-    );
+    ).then(records => records.filter(record => !isTitleBlacklisted(record.title)));
     if (records.length === 0) {
-        // sometimes scraping records returns empty so we should retry
+        // sometimes scraping records returns empty or all are blacklisted so we should retry
         isDebugging() &&
             console.warn(
-                'FindRandomSample, the term and page we picked returned zero records'
+                'FindRandomSample, the term and page we picked returned zero records (possibly all blacklisted)'
             );
         return FindRandomSample(recurseCount + 1, maxRecurse);
     }

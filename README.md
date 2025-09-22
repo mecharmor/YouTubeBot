@@ -4,7 +4,7 @@ An automated Node.js application that creates and uploads long-form audio conten
 
 ## 🌟 Features
 
-- **Audio Scraping**: Automatically finds and downloads Creative Commons audio content
+- **Audio Scraping**: Automatically finds and downloads Creative Commons audio content with built-in content filtering
 - **Audio Processing**: Combines and renders audio into continuous streams
 - **AI-Powered Metadata**: Generates video titles and descriptions using [DeepSeek V3.1](https://openrouter.ai/deepseek/deepseek-chat-v3.1:free) via OpenRouter
 - **YouTube Integration**: Automated upload process using YouTube Data API v3

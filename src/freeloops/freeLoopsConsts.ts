@@ -29,7 +29,6 @@ export const KnownWorkingTerms: string[] = [
     'crackle',
     'nature',
     'bird',
-    'small',
     'white',
     'brown',
     'loop',
@@ -43,3 +42,33 @@ export const KnownWorkingTerms: string[] = [
     'high quality',
     'royalty'
 ];
+
+// Blacklist of keywords that could violate YouTube's terms of service
+export const BLACKLISTED_KEYWORDS: string[] = [
+    // Violence/Weapons
+    'explosion', 'bomb', 'gun', 'gunshot', 'rifle', 'pistol', 'weapon', 'war', 'battle',
+    'fight', 'punch', 'hit', 'violence', 'blood', 'death', 'kill', 'murder',
+    
+    'boy', 'girl', 'baby',
+    
+    // Drugs/Alcohol
+    'drug', 'alcohol', 'drunk', 'beer', 'wine',
+    
+    // Hate speech potential
+    'hate', 'racist',
+    
+    // Copyright issues
+    'copyright', 'trademark', 'branded', 'commercial', 'advertisement',
+    
+    // Other potentially problematic terms
+    'scream', 'cry', 'pain', 'hurt', 'injury', 'accident', 'crash', 'emergency',
+    'police', 'siren', 'alarm', 'warning', 'danger', 'toxic', 'poison'
+];
+
+// Function to check if a title contains blacklisted keywords
+export function isTitleBlacklisted(title: string): boolean {
+    const lowerTitle = title.toLowerCase();
+    return BLACKLISTED_KEYWORDS.some(keyword => 
+        lowerTitle.includes(keyword.toLowerCase())
+    );
+}

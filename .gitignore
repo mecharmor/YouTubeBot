@@ -8,6 +8,7 @@ __pycache__/
 
 temp_downloads/*
 client_secret.json
+cache-*
 
 client_oauth_token.json
 
