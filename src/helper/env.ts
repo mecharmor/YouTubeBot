@@ -5,6 +5,22 @@ export function isDebugging(): boolean {
     return !!Number(process.env.DEBUG);
 }
 
+export function shouldSkipYouTubeUpload(): boolean {
+    return !!Number(process.env.SHOULD_SKIP_YOUTUBE_UPLOAD);
+}
+
+export function shouldUseMockAudio(): boolean {
+    return !!Number(process.env.SHOULD_USE_MOCK_AUDIO);
+}
+
+export function shouldSkipAiContentGeneration(): boolean {
+    return !!Number(process.env.SHOULD_SKIP_AI_CONTENT_GENERATION);
+}
+
+export function shouldUseMockImage(): boolean {
+    return !!Number(process.env.SHOULD_USE_MOCK_IMAGE);
+}
+
 export function cacheCleanupDisabled(): boolean {
     return !!Number(process.env.DISABLE_CACHE_CLEANUP);
 }

@@ -1,6 +1,7 @@
 // https://www.pexels.com/api/documentation/?language=javascript
 
 import fs from 'fs';
+import { join } from 'path'
 import {
     default as pexels,
     PhotosWithTotalResults,
@@ -12,6 +13,7 @@ import { resolve } from 'path';
 import axios, { AxiosResponse } from 'axios';
 import { Stream } from 'stream';
 import { ensurePathEndsWithSlash } from './path.js';
+import { shouldUseMockImage } from './env.js';
 
 export function FetchImageWithSearch(
     searchText: string
@@ -42,6 +44,14 @@ export async function DownloadImageFromSearch(
     outputPath = ensurePathEndsWithSlash(resolve(outputPath));
     if (!fs.existsSync(outputPath)) {
         throw new Error(`Invalid path ${outputPath}`);
+    }
+
+    if(shouldUseMockImage()) {
+        const fileName = 'image.jpeg';
+        const fullPath = join(outputPath, fileName);
+        console.log("Using Mock Image at", fullPath)
+        fs.copyFileSync(resolve(process.cwd(), `./mock/${fileName}`), fullPath);
+        return Promise.resolve(fullPath)
     }
 
     const photo: Photo | ErrorResponse = await FetchImageWithSearch(searchText);

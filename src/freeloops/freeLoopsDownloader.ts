@@ -11,14 +11,14 @@ import { Stream } from 'stream';
 import GetAudioDuration from 'get-audio-duration';
 import { ensurePathEndsWithSlash } from '../helper/path.js';
 const { getAudioDurationInSeconds } = GetAudioDuration;
-import ProgressBar from 'progress';
 import { AudioSample } from '../model.js';
 import { pickRandomElem } from '../helper/random.js';
+import { resolve } from 'path';
 import {
     getAudioUrls,
     getMaxPageCountForSearchTerm,
 } from './freeLoopsParser.js';
-import { isDebugging } from '../helper/env.js';
+import { isDebugging, shouldUseMockAudio } from '../helper/env.js';
 import https from 'https';
 
 export function downloadFromFreeLoops(
@@ -53,6 +53,13 @@ export async function FindRandomSample(
     recurseCount = 0,
     maxRecurse = 4
 ): Promise<FreeLoopsProps> {
+    if(shouldUseMockAudio()) {
+        return Promise.resolve({
+            // all of these props get skipped due to flag
+            id: '',
+            title: 'live bass guitar sound effect'
+        })
+    }
     const randomTerm: string = pickRandomElem(KnownWorkingTerms);
     const maxPageCount: number = await getMaxPageCountForSearchTerm(randomTerm);
     if (recurseCount >= maxRecurse) {
@@ -98,30 +105,51 @@ export async function DownloadFreeLoopsAudio({
         return Promise.reject(`${path} is not a directory`);
     }
 
-    const { data, headers }: AxiosResponse<Stream> =
-        await downloadFromFreeLoops(id);
-    const progBar = new ProgressBar(`Downloading [:bar] :percent`, {
-        width: 40,
-        complete: '=',
-        incomplete: ' ',
-        total: parseInt(headers['content-length']),
-    });
+    if(shouldUseMockAudio()) {
+        const fileName = 'mock.mp3';
+        const fullPath = `${path}${fileName}`
+        console.warn("Using Mock Audio Sample at", fullPath)
+        fs.copyFileSync(resolve(process.cwd(), './mock/mock.mp3'), fullPath);
+        return getAudioDurationInSeconds(fullPath).then(durationSec => ({
+            durationSec,
+            fullPath,
+            fileName,
+            fileStats: fs.statSync(fullPath),
+        }))
+    }
+
+    let downloadedBytes = 0;
+    const startTime = Date.now();
 
     const fileName = `${title}.${extname(title) || 'mp3'}`;
     const fullPath = `${path}${fileName}`;
+
+    const { data }: AxiosResponse<Stream> = await downloadFromFreeLoops(id);
     data.pipe(fs.createWriteStream(fullPath));
 
     let downloadedFile: Omit<FreeLoopsAudio, 'durationSec'>;
     try {
         downloadedFile = (await new Promise((resolve, reject) => {
-            data.on('data', ({ length }: any) => progBar.tick(length));
-            data.on('end', () =>
+            data.on('data', (chunk: Buffer) => {
+                downloadedBytes += chunk.length;
+                const elapsed = (Date.now() - startTime) / 1000;
+                const speed = downloadedBytes / elapsed;
+                const speedKB = (speed / 1024).toFixed(1);
+                const sizeKB = (downloadedBytes / 1024).toFixed(1);
+                
+                // Clear the line and show progress
+                console.log(`Downloading... ${sizeKB} KB (${speedKB} KB/s)`);
+            });
+            data.on('end', () => {
+                const elapsed = (Date.now() - startTime) / 1000;
+                const totalKB = (downloadedBytes / 1024).toFixed(1);
+                console.log(`\nDownload complete: ${totalKB} KB in ${elapsed.toFixed(1)}s`);
                 resolve({
                     fullPath,
                     fileName,
                     fileStats: fs.statSync(fullPath),
-                })
-            );
+                });
+            });
             data.on('error', (e: any) =>
                 reject({
                     message: e || `Failed to stream into file for ${fullPath}`,

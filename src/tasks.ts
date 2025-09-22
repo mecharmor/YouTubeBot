@@ -4,7 +4,7 @@ import {
 } from 'fs';
 import { DownloadFreeLoopsAudio, FindRandomSample, FreeLoopsAudio } from './freeloops/freeLoopsDownloader.js';
 import { FreeLoopsProps } from './freeloops/freeLoopsModel.js';
-import { cacheCleanupDisabled, isDebugging } from './helper/env.js';
+import { cacheCleanupDisabled, isDebugging, shouldSkipAiContentGeneration, shouldSkipYouTubeUpload } from './helper/env.js';
 import { ensurePathEndsWithSlash, removeExtensionIfExists } from './helper/path.js';
 import { DownloadImageFromSearch } from './helper/pexel.js';
 import { makeVideo } from './helper/renderer.js';
@@ -44,7 +44,10 @@ export function makeRandomVideoTask( [ hours, minutes, seconds ] : number[] ) {
         return DownloadFreeLoopsAudio( {
             path : CACHE_DIR,
             props : sample,
-        } )
+        } ).then((audio: FreeLoopsAudio) => {
+            isDebugging() && console.log('Using audio at:', audio.fullPath)
+            return audio;
+        })
     } )
     .then( ( audio : FreeLoopsAudio ) => {
         return DownloadImageFromSearch(
@@ -86,10 +89,19 @@ export function makeRandomVideoTask( [ hours, minutes, seconds ] : number[] ) {
         audio : FreeLoopsAudio,
         duration : { hours : number, minutes : number, seconds : number },
     } ) => {
-        const title = await generateTitle(makeTitle( {
+        let title = makeTitle( {
             hours, minutes, seconds, fileName : audio.fileName
-        } ))
-        const description = await generateDescription(title)
+        } );
+        let description = title;
+        if(!shouldSkipAiContentGeneration()) {
+            title = await generateTitle(title) ?? title;
+            description = await generateDescription(title)
+        }
+        if(shouldSkipYouTubeUpload()) {
+            console.log("AI Generated Title: ", title)
+            console.log("AI Generated Description: ", description)
+            return 'https://youtu.be/N_7lZyP99Ag'
+        }
         return upload2YouTube( {
             title,
             description: description + " Credit to free-loops.com for source",

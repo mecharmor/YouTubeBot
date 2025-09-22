@@ -6,7 +6,7 @@ An automated Node.js application that creates and uploads long-form audio conten
 
 - **Audio Scraping**: Automatically finds and downloads Creative Commons audio content
 - **Audio Processing**: Combines and renders audio into continuous streams
-- **AI-Powered Metadata**: Generates video titles and descriptions using DeepSeek AI model
+- **AI-Powered Metadata**: Generates video titles and descriptions using [DeepSeek V3.1](https://openrouter.ai/deepseek/deepseek-chat-v3.1:free) via OpenRouter
 - **YouTube Integration**: Automated upload process using YouTube Data API v3
 - **Customizable**: Configurable duration, content selection, and upload parameters
 
@@ -22,9 +22,16 @@ Check out a live YouTube channel running this bot:
    - Follow the [YouTube Data API Quickstart Guide](https://developers.google.com/youtube/v3/quickstart/nodejs)
    - Enable the YouTube Data API v3 in your Google Cloud Console
 
-2. **Environment Configuration**
-   - Copy `.env.sample` to `.env`
-   - Configure your settings in the `.env` file
+2. **OpenRouter AI Setup**
+   - Sign up for a free account at [OpenRouter](https://openrouter.ai/)
+   - Navigate to your [API Keys page](https://openrouter.ai/keys)
+   - Create a new API key
+   - Copy the key to your `.env` file as `OPENROUTER_MODEL_KEY_DEEPSEEK`
+   - The bot uses the free DeepSeek V3.1 model for generating video titles and descriptions
+
+3. **Environment Configuration**
+   - Create a `.env` file in the project root
+   - Configure your settings using the variables listed below
 
 ## 🛠️ Installation
 
@@ -68,6 +75,11 @@ Create a `.env` file in the project root with the following variables:
   - Get your API key from [Pexels API](https://www.pexels.com/api/)
   - Required for thumbnail generation
 
+- `OPENROUTER_MODEL_KEY_DEEPSEEK`: Your OpenRouter API key for AI-powered metadata generation
+  - Get your API key from [OpenRouter](https://openrouter.ai/)
+  - Required for generating video titles and descriptions using DeepSeek AI
+  - Uses the free DeepSeek V3.1 model: `deepseek/deepseek-chat-v3.1:free`
+
 #### Debug & Logging
 - `DEBUG`: Enable additional logging for debugging
   - Set to `true` to enable detailed logging
@@ -88,8 +100,24 @@ Create a `.env` file in the project root with the following variables:
 
 #### Cache Management
 - `DISABLE_CACHE_CLEANUP`: Control temporary file cleanup
-  - Set to `true` to prevent removal of temporary files after rendering
+  - Set to `1` to prevent removal of temporary files after rendering
   - Useful for debugging or preserving intermediate files
+
+#### Development & Testing
+- `SHOULD_USE_MOCK_AUDIO`: Use mock audio file instead of downloading
+  - Set to `1` to use a local `mock.mp3` file instead of downloading from free-loops.com
+  - Useful for testing without internet connection or API limits
+  - Requires a `mock.mp3` file in the project root directory
+
+- `SHOULD_USE_MOCK_IMAGE`: Use mock image file instead of downloading from Pexels
+  - Set to `1` to use a local `mock/image.jpeg` file instead of downloading from Pexels API
+  - Useful for testing without internet connection or API limits
+  - Requires a `mock/image.jpeg` file in the project root directory
+
+- `SHOULD_SKIP_AI_CONTENT_GENERATION`: Skip AI-powered title and description generation
+  - Set to `1` to use raw audio filenames as titles instead of AI-generated content
+  - Useful for testing without OpenRouter API access or to avoid AI generation costs
+  - When enabled, uses the original audio filename as both title and description
 
 #### Discord Integration
 - `DISCORD_WEBHOOK_URL`: Webhook URL for Discord notifications
@@ -99,17 +127,57 @@ Create a `.env` file in the project root with the following variables:
 
 Example `.env` configuration:
 ```env
+# API Keys
 PIXEL_API_KEY=your_pexels_api_key
+OPENROUTER_MODEL_KEY_DEEPSEEK=your_openrouter_api_key
+
+# Debug & Logging
 DEBUG=false
+
+# Video Duration Settings
 DURATION_HOURS=2
 DURATION_MINUTES=0
 DURATION_SECONDS=0
-DISABLE_CACHE_CLEANUP=false
-SHOULD_UPLOAD_NEW_VIDEO_FOR_EVERY_HOUR_IN_DURATION=true
 SHOULD_USE_RANDOM_DURATION=false
+
+# Video Generation Options
+SHOULD_UPLOAD_NEW_VIDEO_FOR_EVERY_HOUR_IN_DURATION=true
+
+# Cache Management
+DISABLE_CACHE_CLEANUP=false
+
+# Development & Testing
+SHOULD_USE_MOCK_AUDIO=false
+SHOULD_USE_MOCK_IMAGE=false
+SHOULD_SKIP_AI_CONTENT_GENERATION=false
+
+# Discord Integration (Optional)
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your-webhook-url
 DISCORD_WEBHOOK_AVATAR_URL=https://example.com/avatar.png
 ```
+
+## 🤖 AI Features
+
+This bot uses [OpenRouter](https://openrouter.ai/) to access the free [DeepSeek V3.1 model](https://openrouter.ai/deepseek/deepseek-chat-v3.1:free) for generating YouTube metadata:
+
+### Title Generation
+- Automatically creates engaging, SEO-friendly titles from raw audio filenames
+- Removes technical terms like "Loop" and "Loops" 
+- Incorporates duration information (e.g., "2 hours of Bongo Sounds")
+- Ensures titles meet YouTube's 100-character limit
+
+### Description Generation
+- Generates comprehensive video descriptions with relevant keywords
+- Includes duration information for better searchability
+- Optimized for YouTube's 5000-character description limit
+- Focuses on search engine optimization
+
+### Benefits of DeepSeek V3.1
+- **Free to use** - No cost for API calls
+- **High quality** - 671B parameter model with 37B active parameters
+- **Fast responses** - Optimized for quick generation
+- **Context aware** - Up to 128K token context window
+- **Reliable** - Consistent output formatting
 
 ## 🤝 Contributing
 

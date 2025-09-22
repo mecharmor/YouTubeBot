@@ -34,6 +34,7 @@ export async function getMaxPageCountForSearchTerm(
     const browserPage = await browser.newPage();
     isDebugging() && console.log("Launching browser...")
     const url = constructFreeLoopsSearchUrl(searchTerm, 1);
+    isDebugging() && console.log("Opening At URL:", url)
     await browserPage.goto(url, { waitUntil: 'networkidle0' });
 
     // Wait for the content to load
@@ -45,10 +46,13 @@ export async function getMaxPageCountForSearchTerm(
     
     const maxPage = await browserPage.evaluate(() => {
         const paginationLinks = Array.from(document.querySelectorAll('div.pagination a'));
+        if(paginationLinks.length === 0) {
+            return 1;
+        }
         console.log("Pagination links:", paginationLinks)
         const lastLink = paginationLinks[paginationLinks.length - 1];
         console.log("Last link:", lastLink)
-        const href = lastLink.getAttribute('href');
+        const href = lastLink?.getAttribute?.('href')
         const pageMatch = href?.match(/page=(\d+)/);
         const pageNumber = pageMatch ? Number(pageMatch[1]) : 0;
         console.log("Page number:", pageNumber)

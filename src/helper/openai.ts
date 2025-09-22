@@ -17,7 +17,7 @@ function makeAiRequest(context: string) {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            "model": "deepseek/deepseek-chat-v3-0324:free",
+            "model": "deepseek/deepseek-chat-v3.1:free",
             "messages": [
                 {
                     "role": "user",
@@ -80,11 +80,14 @@ function normalizeTitle(title: string): string {
 
 export async function generateTitle(denormalizedTitle: string) {
     try {
-        const res = await makeAiRequest(`Take this and turn it into a youtube video title: "${denormalizedTitle}".
-It is required that you only respond with the title, no special formatting, or quotes.
-Example Input: "1 hour of underwater sounds"
-Example Output: "1 Hour of Underwater Sounds"
-Respond with the title only!`)
+        const res = await makeAiRequest(`Persona: You are a youtube content creator and you are trying to come up with a clear and human readable title for a youtube video. The title you are given is "${denormalizedTitle}" and isnt good enough to use for youtube.
+Rules: It is required that you only respond with the title, no special formatting, or quotes. Try your best to make it a good You Tube title but if you have a hard time make it a synonym of the input.
+Rules: No special characters, double or single quotes, no responses like "Sure" or "Sure, here is the title" or "Here is the title" or "Here is the title:"
+Requirements: The title will always contain the time duration so please use that for your title. An example could be "5 minutes of water sounds" and you should know its "5 minutes" in time length
+Requirements: Must not contain the word "Loop" or "Loops"
+Example Input: "2 hours of Bongo Loop 16"
+Example Output: "2 hours of Bongo Sounds"
+Respond with the title of the YouTube video only!`)
 
         return normalizeTitle(res);
     }catch(_) {
@@ -98,6 +101,7 @@ export async function generateDescription(denormalizedTitle: string) {
         const res = await makeAiRequest(`Take this YouTube video title and generate me a video description: "${denormalizedTitle}".
 Rules: No double quotes
 Requirements: Must be descriptive, include exhaustive keywords for search.
+Requirements: The video title contains the content length so please use that as part of the title. For example "10 Minutes of fireplace sounds" where the time duration is "10 minutes"
 Please respond with the description only!`)
 
         return normalizeDescription(res);
